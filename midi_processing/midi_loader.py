@@ -110,6 +110,22 @@ class MidiLoader:
         self.metadata = None
         return False
     
+    def load_midi(self, midi_file_path: str):
+        """
+        Load a MIDI file using mido.
+        
+        Args:
+            midi_file_path: Path to the MIDI file.
+            
+        Returns:
+            A mido.MidiFile object or None on failure.
+        """
+        try:
+            return mido.MidiFile(midi_file_path)
+        except Exception as e:
+            print(f"Error loading MIDI file: {e}")
+            return None
+    
     def _extract_note_events(self) -> None:
         """
         Extract note events from the loaded MIDI file.

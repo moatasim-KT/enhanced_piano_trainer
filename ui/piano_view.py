@@ -73,7 +73,7 @@ class PianoView:
         white_key_width = self.width // num_white_keys
         black_key_width = int(white_key_width * 0.6)
         black_key_height = int(self.height * 0.6)
-        
+
         self.keys = []
         white_key_x = 0
         for note in range(self.start_note, self.end_note + 1):
@@ -82,13 +82,14 @@ class PianoView:
                 self.keys.append(key)
                 white_key_x += white_key_width
             else:
-                # Calculate the x position for black keys, which are between white keys
-                previous_white_key_x = None
-                for i in range(len(self.keys) -1 , -1, -1):
-                    if self.keys[i].is_white:
-                        previous_white_key_x = self.keys[i].position[0]
-                        break
-                
+                previous_white_key_x = next(
+                    (
+                        self.keys[i].position[0]
+                        for i in range(len(self.keys) - 1, -1, -1)
+                        if self.keys[i].is_white
+                    ),
+                    None,
+                )
                 if previous_white_key_x is not None:
                     key = PianoKey(note, False, (previous_white_key_x + white_key_width - black_key_width // 2, 0), (black_key_width, black_key_height))
                     self.keys.append(key)
