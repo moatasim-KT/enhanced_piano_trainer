@@ -1,63 +1,31 @@
 name: Build Application
 
-on`):
-
-yaml
-
-name: Build Application
-
-on: [push,: [push, pull_request]
+on: [push, pull_request]
 
 jobs:
   build:
-    runs-on pull_request]
-
-jobs:
-  build:
-    runs-on: ubuntu-l: ubuntu-latest
+    runs-on: ubuntu-latest
 
     steps:
     - name: Checkout repository
-atest
-
-    steps:
-    - uses: actions/checkout@v3      uses: actions/checkout@v3
+      uses: actions/checkout@v3
     
-    -
-
-    - name: Cache dependencies
-      uses: actions/cache name: Set up Node.js
-      uses: actions/cache run: npm run build
-      uses: actions/setup-node@@v3
-      with:
-        path: ~/.cache
-        keyv2
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
       with:
         node-version: '14'
     
-    #: ${{ runner.os }}-cache-${{ hashFiles('**/lockfiles Update the cache action version to v3 or v4
-    -') }}
-        restore-keys: |
-          ${{ runner.os name: Cache dependencies
-      uses: actions/cache@ }}-cache-
-
-    # Add other steps below
-    - name: Setv3
+    # Update the cache action version to v3 or v4
+    - name: Cache dependencies
+      uses: actions/cache@v3
       with:
         path: ~/.npm
-        key: ${{ up Python
-      uses: actions/setup-python@v3 runner.os }}-node-${{ hashFiles('**/package-lock.json')
-      with:
-        python-version: '3.x'
-
-    - name }}
+        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
         restore-keys: |
-          ${{ runner.os: Install dependencies
-      run: python -m pip install -- }}-node-
+          ${{ runner.os }}-node-
     
     - name: Install dependencies
-upgrade pip
-    # Add other steps as needed
       run: npm install
 
     - name: Build the application
+      run: npm run build
