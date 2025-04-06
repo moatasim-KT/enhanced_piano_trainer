@@ -89,9 +89,13 @@ class PianoView:
                         previous_white_key_x = self.keys[i].position[0]
                         break
                 
-                key = PianoKey(note, False, (previous_white_key_x + white_key_width - black_key_width // 2, 0), (black_key_width, black_key_height))
-                self.keys.append(key)
-
+                if previous_white_key_x is not None:
+                    key = PianoKey(note, False, (previous_white_key_x + white_key_width - black_key_width // 2, 0), (black_key_width, black_key_height))
+                    self.keys.append(key)
+                else:
+                    # Handle the case where no white key has been added yet
+                    # For now, we skip adding the black key
+                    print(f"Skipping black key for note {note} as no white key has been added yet.")
     def _is_white_key(self, note_number: int) -> bool:
         """Helper function to determine if a note is a white key"""
         # A simple way to identify white keys based on MIDI note number.  
