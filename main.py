@@ -63,7 +63,16 @@ class EnhancedPianoTrainer:
         
         # Application state
         self.running = True
-    
+        self.cache_menu_options()
+
+    def cache_menu_options(self):
+        """Cache rendered menu options for faster drawing."""
+        self.cached_menu_options = []
+        for i, option in enumerate(self.menu_options):
+            text = self.font.render(option, True, self.WHITE)
+            text_rect = text.get_rect(center=(self.screen_width // 2, 250 + i * 60))
+            self.cached_menu_options.append((text, text_rect))
+
     def handle_events(self, events):
         """Handle pygame events."""
         for event in events:
@@ -86,8 +95,7 @@ class EnhancedPianoTrainer:
                         self.execute_menu_option(self.selected_option)
                 elif event.type == MOUSEBUTTONDOWN:
                     mouse_x, mouse_y = event.pos
-                    for i, option in enumerate(self.menu_options):
-                        text_rect = self.font.render(option, True, self.WHITE).get_rect(center=(self.screen_width // 2, 250 + i * 60))
+                    for i, (_, text_rect) in enumerate(self.cached_menu_options):
                         if text_rect.left <= mouse_x <= text_rect.right and text_rect.top <= mouse_y <= text_rect.bottom:
                             self.execute_menu_option(i)
                             break
@@ -114,11 +122,10 @@ class EnhancedPianoTrainer:
         self.screen.blit(title, title_rect)
         
         # Draw menu options
-        for i, option in enumerate(self.menu_options):
+        for i, (text, text_rect) in enumerate(self.cached_menu_options):
             color = self.LIGHT_BLUE if i == self.selected_option else self.WHITE
-            text = self.font.render(option, True, color)
-            text_rect = text.get_rect(center=(self.screen_width // 2, 250 + i * 60))
-            self.screen.blit(text, text_rect)
+            colored_text = self.font.render(self.menu_options[i], True, color)
+            self.screen.blit(colored_text, text_rect)
         
         # Draw instructions
         instructions = self.font.render("Use UP/DOWN arrows to navigate, ENTER to select", True, self.GRAY)
@@ -126,7 +133,16 @@ class EnhancedPianoTrainer:
         self.screen.blit(instructions, instructions_rect)
         
         pygame.display.flip()
-    
+
+    def has_menu_changed(self):
+        """Checks if the selected menu option has changed."""
+        if not hasattr(self, 'previous_selected_option'):
+            self.previous_selected_option = self.selected_option
+            return False
+        changed = self.previous_selected_option != self.selected_option
+        self.previous_selected_option = self.selected_option
+        return changed
+
     def run(self):
         """Main application loop."""
         while self.running:
