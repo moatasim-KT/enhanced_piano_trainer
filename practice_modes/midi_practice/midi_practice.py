@@ -34,7 +34,7 @@ class MIDIPracticeMode(RegularPracticeMode):
         return
 
     def draw(self, surface: pygame.Surface):
-        print("MIDIPracticeMode.draw() called")  # Added print statement
+        logging.debug("MIDIPracticeMode.draw() called")  # Added logging statement
         # Render MIDI practice mode UI
         surface.fill((0, 0, 0))  # Clear the surface
 
