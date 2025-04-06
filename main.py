@@ -84,6 +84,14 @@ class EnhancedPianoTrainer:
                         self.selected_option = (self.selected_option + 1) % len(self.menu_options)
                     elif event.key == K_RETURN:
                         self.execute_menu_option(self.selected_option)
+                elif event.type == MOUSEBUTTONDOWN:
+                    mouse_x, mouse_y = event.pos
+                    for i, option in enumerate(self.menu_options):
+                        text_rect = self.font.render(option, True, self.WHITE).get_rect(center=(self.screen_width // 2, 250 + i * 60))
+                        if text_rect.left <= mouse_x <= text_rect.right and text_rect.top <= mouse_y <= text_rect.bottom:
+                            self.execute_menu_option(i)
+                            break
+
     
     def execute_menu_option(self, option):
         """Execute the selected menu option."""
