@@ -9,8 +9,8 @@ from pygame.locals import *
 from ui.piano_view import PianoView
 from audio.sound_engine import SoundEngine
 from practice_modes.regular_practice.regular_practice import RegularPracticeMode
-from practice_modes import MIDIPracticeMode
-from midi_processing.midi_loader import MIDILoader
+from practice_modes.midi_practice.midi_practice import MIDIPracticeMode
+from midi_processing.midi_loader import MidiLoader
 
 class EnhancedPianoTrainer:
     def __init__(self):
@@ -31,7 +31,7 @@ class EnhancedPianoTrainer:
         # Initialize components
         self.sound_engine = SoundEngine(os.path.join("media", "samples"))
         self.piano_view = PianoView(self.screen, self.screen_width, self.screen_height)
-        self.midi_loader = MIDILoader(os.path.join("media", "midi"))
+        self.midi_loader = MidiLoader(os.path.join("media", "midi"))
         
         # Initialize practice modes
         self.regular_practice = RegularPracticeMode(self.piano_view, self.sound_engine)
@@ -64,9 +64,9 @@ class EnhancedPianoTrainer:
         # Application state
         self.running = True
     
-    def handle_events(self):
+    def handle_events(self, events):
         """Handle pygame events."""
-        for event in pygame.event.get():
+        for event in events:
             if event.type == QUIT:
                 self.running = False
 
@@ -74,7 +74,6 @@ class EnhancedPianoTrainer:
                 if event.key == K_ESCAPE:
                     if self.in_menu:
                         self.running = False
-
                     else:
                         self.in_menu = True
                 # Menu navigation
@@ -85,9 +84,6 @@ class EnhancedPianoTrainer:
                         self.selected_option = (self.selected_option + 1) % len(self.menu_options)
                     elif event.key == K_RETURN:
                         self.execute_menu_option(self.selected_option)
-                else:
-                    # Pass events to active mode
-                    self.active_mode.handle_event(event)
     
     def execute_menu_option(self, option):
         """Execute the selected menu option."""
@@ -126,14 +122,15 @@ class EnhancedPianoTrainer:
     def run(self):
         """Main application loop."""
         while self.running:
-            self.handle_events()
+            events = pygame.event.get()
+            self.handle_events(events)
             
             if self.in_menu:
                 self.draw_menu()
             else:
-                # Update and render active mode
-                self.active_mode.update()
-                self.active_mode.render()
+                # Update and draw the active mode; pass events to update and provide the screen to draw.
+                self.active_mode.update(events)
+                self.active_mode.draw(self.screen)
             
             self.clock.tick(self.fps)
         
@@ -167,4 +164,3 @@ if __name__ == "__main__":
     
     # Run the application
     app.run()
-

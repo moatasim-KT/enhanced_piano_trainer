@@ -8,7 +8,7 @@ from ui.piano_view import PianoView
 from audio.sound_engine import SoundEngine
 
 
-class PracticeMode:
+class RegularPracticeMode:
     """Base class for all practice modes"""
     
     def __init__(self, piano_view: PianoView, sound_engine: SoundEngine):
@@ -59,7 +59,7 @@ class PracticeMode:
         return {"score": 0, "accuracy": 0, "time": 0}
 
 
-class NoteIdentificationPractice(PracticeMode):
+class NoteIdentificationPractice(RegularPracticeMode):
     """Practice mode for identifying notes on the keyboard"""
     
     def __init__(self, piano_view: PianoView, sound_engine: SoundEngine):
@@ -186,7 +186,7 @@ class NoteIdentificationPractice(PracticeMode):
         }
 
 
-class ScalePractice(PracticeMode):
+class ScalePractice(RegularPracticeMode):
     """Practice mode for learning and playing scales"""
     
     def __init__(self, piano_view: PianoView, sound_engine: SoundEngine):
