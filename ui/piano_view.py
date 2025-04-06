@@ -29,6 +29,7 @@ class PianoKey:
              colors: Dict[str, Tuple[int, int, int]],
              show_labels: bool = True,
              font: Optional[pygame.font.Font] = None) -> None:
+        print(f"Drawing key: note={self.note_number}, pos={self.position}, size={self.size}")
         """Draw the key on the given surface"""
         # Determine the color based on the key state
         if self.highlight_color:
@@ -37,6 +38,7 @@ class PianoKey:
             color = colors['pressed'] if self.is_white else colors['black_pressed']
         else:
             color = colors['white'] if self.is_white else colors['black']
+        print(f"  Drawing with color: {color}")
         
         # Draw the key
         pygame.draw.rect(surface, color, (*self.position, *self.size))
@@ -57,6 +59,7 @@ class PianoKey:
 
 class PianoView:
     def __init__(self, screen, width, height):
+        print("PianoView initialized")
         self.screen = screen
         self.width = width
         self.height = height
@@ -68,11 +71,16 @@ class PianoView:
         self._calculate_dimensions()
 
     def _calculate_dimensions(self):
+        print("Calculating piano dimensions")
         white_keys = [n for n in range(self.start_note, self.end_note + 1) if self._is_white_key(n)]
         num_white_keys = len(white_keys)
         white_key_width = self.width // num_white_keys
         black_key_width = int(white_key_width * 0.6)
         black_key_height = int(self.height * 0.6)
+        print(f"  Number of white keys: {num_white_keys}")
+        print(f"  White key width: {white_key_width}")
+        print(f"  Black key width: {black_key_width}")
+        print(f"  Black key height: {black_key_height}")
 
         self.keys = []
         white_key_x = 0
@@ -81,6 +89,7 @@ class PianoView:
                 key = PianoKey(note, True, (white_key_x, 0), (white_key_width, self.height))
                 self.keys.append(key)
                 white_key_x += white_key_width
+                print(f"  Created white key: note={note}, pos=({white_key_x - white_key_width}, 0), size=({white_key_width}, {self.height})")
             else:
                 previous_white_key_x = next(
                     (
@@ -93,14 +102,13 @@ class PianoView:
                 if previous_white_key_x is not None:
                     key = PianoKey(note, False, (previous_white_key_x + white_key_width - black_key_width // 2, 0), (black_key_width, black_key_height))
                     self.keys.append(key)
+                    print(f"  Created black key: note={note}, pos=({previous_white_key_x + white_key_width - black_key_width // 2}, 0), size=({black_key_width}, {black_key_height})")
                 else:
                     # Handle the case where no white key has been added yet
                     # For now, we skip adding the black key
                     print(f"Skipping black key for note {note} as no white key has been added yet.")
     def _is_white_key(self, note_number: int) -> bool:
         """Helper function to determine if a note is a white key"""
-        # A simple way to identify white keys based on MIDI note number.  
-        # This will need to be adjusted for different keyboard layouts or note ranges.
         return (note_number % 12) in [0, 2, 4, 5, 7, 9, 11]
 
     def highlight_key(self, note_number: int, color: Tuple[int, int, int]):
@@ -115,6 +123,14 @@ class PianoView:
                 key.highlight_color = None
                 break
 
-    def reset_key_colors(self):
+    def reset_highlights(self):
         for key in self.keys:
             key.highlight_color = None
+
+    def draw(self, surface: pygame.Surface, 
+             colors: Dict[str, Tuple[int, int, int]],
+             show_labels: bool = True,
+             font: Optional[pygame.font.Font] = None) -> None:
+        print("Drawing piano keys")
+        for key in self.keys:
+            key.draw(surface, colors, show_labels, font)

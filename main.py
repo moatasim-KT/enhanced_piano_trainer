@@ -3,6 +3,7 @@ import sys
 import os
 import pygame
 import argparse
+import traceback  # Import the traceback module for detailed error information
 from pygame.locals import *
 
 # Import custom modules
@@ -220,7 +221,6 @@ class EnhancedPianoTrainer:
         try:
             self._extracted_from_execute_menu_option_18(option)
         except Exception as e:
-            import traceback
             print(f"ERROR executing menu option {option}: {e}")
             traceback.print_exc()
             # Restore previous state on failure
@@ -332,7 +332,7 @@ class EnhancedPianoTrainer:
                     self.in_menu = True
                     self.draw_menu()
             except Exception as e:
-                self._extracted_from_draw_full_screen_38(e)
+                self._handle_draw_error(e)
         else:
             print("WARNING: No active mode to draw, falling back to menu")
             self.in_menu = True
@@ -343,14 +343,13 @@ class EnhancedPianoTrainer:
         self.screen.blit(debug_text, (10, self.screen_height - 30))
         pygame.display.flip()  # Make sure to update the display
 
-    # TODO Rename this here and in `draw_full_screen`
-    def _extracted_from_draw_full_screen_38(self, e):
-        mode_name = self.active_mode.__class__.__name__ if hasattr(self, 'active_mode') else "Unknown"
+    def _handle_draw_error(self, e, mode_name="Unknown"):
+        """Handle errors during drawing and ensure fallback to menu."""
         print(f"ERROR drawing {mode_name} screen: {str(e)}")
-        import traceback
         traceback.print_exc()
         self.in_menu = True
-        self.draw_menu()
+        self.draw_full_screen()  # Force menu redraw to ensure stability
+
     def initialize_modes(self):
         """Initialize practice modes with required setup."""
         print("Initializing practice modes")
@@ -380,7 +379,6 @@ class EnhancedPianoTrainer:
             mode_name = mode_name or "Unknown"
             
         print(f"ERROR {error_type} in {mode_name}: {str(error)}")
-        import traceback
         traceback.print_exc()
         
         # Try to stop the broken mode before returning to menu
@@ -406,161 +404,187 @@ class EnhancedPianoTrainer:
         
         # Initial screen setup
         self.draw_full_screen()
+        
+        # Temporary code to cycle through practice modes for testing
+        modes = [self.regular_practice, self.scale_practice, self.midi_practice]
+        mode_index = 0
+        self.active_mode = modes[mode_index]
+        self.activate_mode(self.active_mode, self.active_mode.__class__.__name__)
+        
+        last_switch_time = pygame.time.get_ticks()
+        switch_interval = 5000  # Switch modes every 5 seconds
+
         while self.running:
-            events = pygame.event.get()
-            
-            # Store state before event handling
-            was_in_menu = self.in_menu
-            
-            # Handle events first
             try:
-                self.handle_events(events)
-            except Exception as e:
-                print(f"ERROR in event handling: {e}")
-                import traceback
-                traceback.print_exc()
-                # Stay in current state on event error, but ensure screen is redrawn
-                self.draw_full_screen()
-            # Process state change if menu state has changed
-            if was_in_menu != self.in_menu:
-                print(f"Menu state changed: {was_in_menu} -> {self.in_menu}")
-                # Special handling for mode transitions
-                if not self.in_menu and hasattr(self, 'active_mode') and self.active_mode:
-                    # Get mode name for better error messages
-                    mode_name = self.active_mode.__class__.__name__
-                    
-                    # Verify mode is active after transition
-                    if hasattr(self.active_mode, 'is_active') and not self.active_mode.is_active:
-                        print(f"Ensuring {mode_name} is active after menu transition")
-                        try:
-                            if hasattr(self.active_mode, 'start'):
-                                self.active_mode.start()
-                                print(f"Successfully activated {mode_name} after transition")
-                            else:
-                                print(f"ERROR: {mode_name} has no start method")
-                                self.in_menu = True
-                        except Exception as e:
-                                   self.draw_full_screen()  # Ensure proper state after failure
-            
-            # Draw the appropriate screen based on menu state
-            if self.in_menu:
-                self.draw_menu()
-            else:
+                current_time = pygame.time.get_ticks()
+                if current_time - last_switch_time > switch_interval:
+                    self.stop_current_mode()
+                    mode_index = (mode_index + 1) % len(modes)
+                    self.active_mode = modes[mode_index]
+                    self.activate_mode(self.active_mode, self.active_mode.__class__.__name__)
+                    last_switch_time = current_time
+                    print(f"Switched to {self.active_mode.__class__.__name__}")
+
+                events = pygame.event.get()
+                
+                # Store state before event handling
+                was_in_menu = self.in_menu
+                
+                # Handle events first
                 try:
-                    # Verify the active mode exists and is active
-                    if not hasattr(self, 'active_mode') or self.active_mode is None:
-                        print("ERROR: No active mode set, returning to menu")
-                        self.in_menu = True
-                        self.draw_full_screen()
-                        continue
-                    # Log current mode for debugging
-                    mode_name = self.active_mode.__class__.__name__
-                    print(f"Active mode: {mode_name}")
-                    
-                    # Check if mode is properly initialized
-                    if hasattr(self.active_mode, 'is_active'):
-                        if not self.active_mode.is_active:
-                            print(f"WARNING: {mode_name} is not active, restarting it")
+                    self.handle_events(events)
+                except Exception as e:
+                    print(f"ERROR in event handling: {e}")
+                    traceback.print_exc()
+                    # Stay in current state on event error, but ensure screen is redrawn
+                    self.draw_full_screen()
+                # Process state change if menu state has changed
+                if was_in_menu != self.in_menu:
+                    print(f"Menu state changed: {was_in_menu} -> {self.in_menu}")
+                    # Special handling for mode transitions
+                    if not self.in_menu and hasattr(self, 'active_mode') and self.active_mode:
+                        # Get mode name for better error messages
+                        mode_name = self.active_mode.__class__.__name__
+                        
+                        # Verify mode is active after transition
+                        if hasattr(self.active_mode, 'is_active') and not self.active_mode.is_active:
+                            print(f"Ensuring {mode_name} is active after menu transition")
                             try:
                                 if hasattr(self.active_mode, 'start'):
                                     self.active_mode.start()
-                                    print(f"Restarted {mode_name}")
+                                    print(f"Successfully activated {mode_name} after transition")
                                 else:
                                     print(f"ERROR: {mode_name} has no start method")
                                     self.in_menu = True
+                            except Exception as e:
+                                print(f"Error during mode transition: {e}")
+                                traceback.print_exc()
+                                self.draw_full_screen()  # Ensure proper state after failure
+                
+                # Draw the appropriate screen based on menu state
+                if self.in_menu:
+                    self.draw_menu()
+                else:
+                    try:
+                        # Verify the active mode exists and is active
+                        if not hasattr(self, 'active_mode') or self.active_mode is None:
+                            print("ERROR: No active mode set, returning to menu")
+                            self.in_menu = True
+                            self.draw_full_screen()
+                            continue
+                        # Log current mode for debugging
+                        mode_name = self.active_mode.__class__.__name__
+                        print(f"Active mode: {mode_name}")
+                        
+                        # Check if mode is properly initialized
+                        if hasattr(self.active_mode, 'is_active'):
+                            if not self.active_mode.is_active:
+                                print(f"WARNING: {mode_name} is not active, restarting it")
+                                try:
+                                    if hasattr(self.active_mode, 'start'):
+                                        self.active_mode.start()
+                                        print(f"Restarted {mode_name}")
+                                    else:
+                                        print(f"ERROR: {mode_name} has no start method")
+                                        self.in_menu = True
+                                        self.draw_full_screen()  # Use full screen redraw to ensure proper state
+                                        continue
+                                except Exception as e:
+                                    print(f"ERROR restarting {mode_name}: {e}")
+                                    traceback.print_exc()
+                                    self.in_menu = True
                                     self.draw_full_screen()  # Use full screen redraw to ensure proper state
                                     continue
+                        else:
+                            print(f"WARNING: {mode_name} has no is_active attribute")
+                        
+                        # Verify consistent menu state
+                        if self.in_menu:
+                            print("CRITICAL: We're in practice mode but in_menu is True! Returning to menu...")
+                            self.draw_full_screen()  # Force menu redraw
+                            continue
+                        
+                        # Verify the mode is properly initialized
+                        if hasattr(self.active_mode, 'is_active') and not self.active_mode.is_active:
+                            print(f"WARNING: {mode_name} reports not active but we're in practice mode")
+                            # Try to activate the mode once more
+                            if hasattr(self.active_mode, 'start'):
+                                try:
+                                    print(f"Attempting to restart {mode_name}")
+                                    self.active_mode.start()
+                                    print(f"Successfully restarted {mode_name}")
+                                except Exception as e:
+                                    print(f"Failed to restart {mode_name}: {e}")
+                                    traceback.print_exc()
+                                    # Force active as last resort, then continue
+                                    self.active_mode.is_active = True
+                                    print(f"Forced {mode_name} to active state as recovery measure")
+                            else:
+                                # No start method, just force active
+                                self.active_mode.is_active = True
+                                print(f"Forced {mode_name} active (no start method available)")
+                        # Update and draw the active mode
+                        mode_name = self.active_mode.__class__.__name__
+                        
+                        # Update mode
+                        if hasattr(self.active_mode, 'update'):
+                            try:
+                                self.active_mode.update(events)
                             except Exception as e:
-                                print(f"ERROR restarting {mode_name}: {e}")
+                                if self.handle_mode_error(e, "updating", mode_name):
+                                    continue
+                        else:
+                            print(f"WARNING: {mode_name} has no update method!")
+                            
+                        # Draw mode
+                        if hasattr(self.active_mode, 'draw'):
+                            print(f"Drawing {mode_name} - starting draw call")
+                            try:
+                                # Clear the screen before drawing
+                                self.screen.fill(self.BLACK)
+                                
+                                # Check if is_active flag is set before drawing
+                                # We already validated active state, but check one more time
+                                # in case something deactivated it during update
+                                if hasattr(self.active_mode, 'is_active') and not self.active_mode.is_active:
+                                    print(f"WARNING: {mode_name} became inactive between update and draw")
+                                    # Just force it active for this frame to avoid errors
+                                    self.active_mode.is_active = True
+                                    
+                                # Now draw the mode
+                                self.active_mode.draw(self.screen)
+                                # Add ESC hint consistently across all screens
+                                hint = self.font.render("Press ESC to return to menu", True, self.GRAY)
+                                self.screen.blit(hint, (20, self.screen_height - 30))
+                                pygame.display.flip()  # Ensure screen updates are shown
+                                print(f"Successfully drew {mode_name}")
+                            except Exception as e:
+                                self._handle_draw_error(e, mode_name)
+                                continue
+                        else:
+                            print(f"WARNING: {mode_name} has no draw method!")
+                            # Check if this mode has any way to interact with the user
+                            if not hasattr(self.active_mode, 'update'):
+                                print(f"CRITICAL: {mode_name} has neither draw nor update methods, returning to menu")
                                 self.in_menu = True
                                 self.draw_full_screen()  # Use full screen redraw to ensure proper state
                                 continue
-                    else:
-                        print(f"WARNING: {mode_name} has no is_active attribute")
-                    
-                    # Verify consistent menu state
-                    if self.in_menu:
-                        print("CRITICAL: We're in practice mode but in_menu is True! Returning to menu...")
-                        self.draw_full_screen()  # Force menu redraw
-                        continue
-                    
-                    # Verify the mode is properly initialized
-                    if hasattr(self.active_mode, 'is_active') and not self.active_mode.is_active:
-                        print(f"WARNING: {mode_name} reports not active but we're in practice mode")
-                        # Try to activate the mode once more
-                        if hasattr(self.active_mode, 'start'):
-                            try:
-                                print(f"Attempting to restart {mode_name}")
-                                self.active_mode.start()
-                                print(f"Successfully restarted {mode_name}")
-                            except Exception as e:
-                                print(f"Failed to restart {mode_name}: {e}")
-                                # Force active as last resort, then continue
-                                self.active_mode.is_active = True
-                                print(f"Forced {mode_name} to active state as recovery measure")
-                        else:
-                            # No start method, just force active
-                            self.active_mode.is_active = True
-                            print(f"Forced {mode_name} active (no start method available)")
-                    # Update and draw the active mode
-                    mode_name = self.active_mode.__class__.__name__
-                    
-                    # Update mode
-                    if hasattr(self.active_mode, 'update'):
-                        try:
-                            self.active_mode.update(events)
-                        except Exception as e:
-                            if self.handle_mode_error(e, "updating", mode_name):
-                                continue
-                    else:
-                        print(f"WARNING: {mode_name} has no update method!")
-                        
-                    # Draw mode
-                    if hasattr(self.active_mode, 'draw'):
-                        print(f"Drawing {mode_name} - starting draw call")
-                        try:
-                            # Clear the screen before drawing
-                            self.screen.fill(self.BLACK)
-                            
-                            # Check if is_active flag is set before drawing
-                            # We already validated active state, but check one more time
-                            # in case something deactivated it during update
-                            if hasattr(self.active_mode, 'is_active') and not self.active_mode.is_active:
-                                print(f"WARNING: {mode_name} became inactive between update and draw")
-                                # Just force it active for this frame to avoid errors
-                                self.active_mode.is_active = True
-                                
-                            # Now draw the mode
-                            self.active_mode.draw(self.screen)
-                            # Add ESC hint consistently across all screens
-                            hint = self.font.render("Press ESC to return to menu", True, self.GRAY)
-                            self.screen.blit(hint, (20, self.screen_height - 30))
-                            pygame.display.flip()  # Ensure screen updates are shown
-                            print(f"Successfully drew {mode_name}")
-                        except Exception as e:
-                            if self.handle_mode_error(e, "drawing", mode_name):
-                                continue
-                    else:
-                        print(f"WARNING: {mode_name} has no draw method!")
-                        # Check if this mode has any way to interact with the user
-                        if not hasattr(self.active_mode, 'update'):
-                            print(f"CRITICAL: {mode_name} has neither draw nor update methods, returning to menu")
-                            self.in_menu = True
-                            self.draw_full_screen()  # Use full screen redraw to ensure proper state
-                            continue
-                        else:
-                            # Mode has update but no draw, try to continue anyway
-                            print(f"Continuing with {mode_name} despite no draw method (has update method)")
-                            # Add some minimal feedback to show the mode is active
-                            self.screen.fill(self.BLACK)  # Clear screen first
-                            mode_info = self.font.render(f"Active: {mode_name}", True, self.WHITE)
-                            self.screen.blit(mode_info, (20, 20))
-                            # Add ESC hint
-                            hint = self.font.render("Press ESC to return to menu", True, self.GRAY)
-                            self.screen.blit(hint, (20, 60))
-                            pygame.display.flip()
-                except Exception as e:
-                    self.handle_mode_error(e, "critical")
+                            else:
+                                # Mode has update but no draw, try to continue anyway
+                                print(f"Continuing with {mode_name} despite no draw method (has update method)")
+                                # Add some minimal feedback to show the mode is active
+                                self.screen.fill(self.BLACK)  # Clear screen first
+                                mode_info = self.font.render(f"Active: {mode_name}", True, self.WHITE)
+                                self.screen.blit(mode_info, (20, 20))
+                                # Add ESC hint
+                                hint = self.font.render("Press ESC to return to menu", True, self.GRAY)
+                                self.screen.blit(hint, (20, 60))
+                                pygame.display.flip()
+            except Exception as e:
+                print(f"CRITICAL ERROR: Unhandled exception in main loop: {e}")
+                traceback.print_exc()
+                self.in_menu = True
+                self.draw_full_screen()  # Ensure we always return to a stable state
         # Cleanup
         pygame.quit()
         sys.exit()
