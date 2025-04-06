@@ -33,6 +33,22 @@ class MIDIPracticeMode(RegularPracticeMode):
         # Process events if needed; else ignore them.
         return
 
-    def render(self):
+    def draw(self, surface: pygame.Surface):
+        logging.debug("MIDIPracticeMode.draw() called")  # Added logging statement
         # Render MIDI practice mode UI
-        return
+        surface.fill((0, 0, 0))  # Clear the surface
+
+        # Draw Play button
+        pygame.draw.rect(surface, (0, 255, 0), self.play_button_rect)
+        play_text = self.font.render("Play", True, (0, 0, 0))
+        play_text_rect = play_text.get_rect(center=self.play_button_rect.center)
+        surface.blit(play_text, play_text_rect)
+
+        # Draw Stop button
+        pygame.draw.rect(surface, (255, 0, 0), self.stop_button_rect)
+        stop_text = self.font.render("Stop", True, (0, 0, 0))
+        stop_text_rect = stop_text.get_rect(center=self.stop_button_rect.center)
+        surface.blit(stop_text, stop_text_rect)
+
+        # Placeholder for MIDI data visualization
+        # Add code here to visualize the MIDI data (e.g., piano roll)
