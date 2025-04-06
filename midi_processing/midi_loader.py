@@ -99,12 +99,16 @@ class MidiLoader:
             self._extract_metadata()
             return True
         except Exception as e:
-            logger.error(f"Error loading MIDI file {file_path}: {e}")
-            self.current_midi = None
-            self.current_file_path = None
-            self.note_events = []
-            self.metadata = None
-            return False
+            return self._extracted_from_load_midi_file_18(file_path, e)
+
+    # TODO Rename this here and in `load_midi_file`
+    def _extracted_from_load_midi_file_18(self, file_path, e):
+        logger.error(f"Error loading MIDI file {file_path}: {e}")
+        self.current_midi = None
+        self.current_file_path = None
+        self.note_events = []
+        self.metadata = None
+        return False
     
     def _extract_note_events(self) -> None:
         """
@@ -213,12 +217,7 @@ class MidiLoader:
         Returns:
             The tempo in microseconds per beat.
         """
-        # Default tempo: 500,000 microseconds per beat (120 BPM)
-        tempo = 500000
-        
-        # TODO: Implement proper tempo tracking based on tempo change events
-        
-        return tempo
+        return 500000
     
     def get_notes_in_time_range(self, start_time: float, end_time: float) -> List[NoteEvent]:
         """
@@ -323,24 +322,24 @@ class MidiLoader:
         notes = {'C': 0, 'C#': 1, 'Db': 1, 'D': 2, 'D#': 3, 'Eb': 3, 
                 'E': 4, 'F': 5, 'F#': 6, 'Gb': 6, 'G': 7, 
                 'G#': 8, 'Ab': 8, 'A': 9, 'A#': 10, 'Bb': 10, 'B': 11}
-        
+
         # Extract note and octave
         if len(note_name) < 2:
             raise ValueError(f"Invalid note name: {note_name}")
-        
-        if note_name[1] == '#' or note_name[1] == 'b':
+
+        if note_name[1] in ['#', 'b']:
             if len(note_name) < 3:
                 raise ValueError(f"Invalid note name: {note_name}")
-            note = note_name[0:2]
+            note = note_name[:2]
             octave = int(note_name[2:])
         else:
             note = note_name[0]
             octave = int(note_name[1:])
-        
+
         # Calculate MIDI note number
         if note not in notes:
             raise ValueError(f"Invalid note: {note}")
-        
+
         return notes[note] + (octave + 1) * 12
     
     def extract_melodies(self, min_notes: int = 8) -> List[List[NoteEvent]]:
@@ -360,18 +359,12 @@ class MidiLoader:
             if key not in notes_by_track_channel:
                 notes_by_track_channel[key] = []
             notes_by_track_channel[key].append(note)
-        
-        # Find sequences that might be melodies
-        melodies = []
-        for track_channel, notes in notes_by_track_channel.items():
-            if len(notes) < min_notes:
-                continue
-            
-            # Further analysis could be done here to identify true melodies
-            # For now, we'll just consider any sequence with enough notes
-            melodies.append(notes)
-        
-        return melodies
+
+        return [
+            notes
+            for notes in notes_by_track_channel.values()
+            if len(notes) >= min_notes
+        ]
     
     def extract_chords(self, max_start_diff: float = 0.05) -> List[List[NoteEvent]]:
         """
@@ -385,24 +378,23 @@ class MidiLoader:
         """
         if not self.note_events:
             return []
-        
+
         # Sort notes by start time
         sorted_notes = sorted(self.note_events, key=lambda x: x.start_time)
-        
+
         chords = []
         current_chord = [sorted_notes[0]] if sorted_notes else []
-        
+
         for note in sorted_notes:
             if not current_chord:
                 current_chord.append(note)
+            elif note.start_time - current_chord[0].start_time <= max_start_diff:
+                current_chord.append(note)
             else:
-                if note.start_time - current_chord[0].start_time <= max_start_diff:
-                    current_chord.append(note)
-                else:
-                    chords.append(current_chord)
-                    current_chord = [note]
-        
+                chords.append(current_chord)
+                current_chord = [note]
+
         if current_chord:
             chords.append(current_chord)
-        
+
         return chords

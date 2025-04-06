@@ -3,9 +3,9 @@ import pygame
 from typing import List, Dict, Tuple, Optional, Callable
 
 # Import from other modules
-from enhanced_piano_trainer.midi_processing.midi_loader import MidiLoader
-from enhanced_piano_trainer.ui.piano_view import PianoView
-from enhanced_piano_trainer.audio.sound_engine import SoundEngine
+from midi_processing.midi_loader import MidiLoader
+from ui.piano_view import PianoView
+from audio.sound_engine import SoundEngine
 
 
 class PracticeMode:
@@ -225,30 +225,23 @@ class ScalePractice(PracticeMode):
     def select_scale(self):
         """Select a scale based on current difficulty level"""
         available_scales = list(self.scales.keys())
-        
+
         # Add advanced scales at higher difficulty levels
         if self.difficulty >= 3:
             available_scales.extend(list(self.advanced_scales.keys())[:self.difficulty-2])
-            
+
         self.current_scale_name = random.choice(available_scales)
-        
+
         if self.current_scale_name in self.scales:
             self.current_scale = self.scales[self.current_scale_name]
         else:
             self.current_scale = self.advanced_scales[self.current_scale_name]
-            
+
         self.current_position = 0
         self.direction = 1
         self.expecting_note = self.current_scale[0]
-        
-        # Highlight the first note
-        self.piano_view.reset_highlights()
-        self.piano_view.highlight_key(self.expecting_note, (0, 255, 0))
-        
-        # Highlight the entire scale with a different color
-        for note in self.current_scale:
-            if note != self.expecting_note:
-                self.piano_view.highlight_key(note, (100, 100, 255), priority=1)
+
+        self._extracted_from_advance_note_21()
     
     def update(self, events: List[pygame.event.Event], midi_inputs: List = None) -> None:
         """Update the practice session based on user input"""
@@ -292,33 +285,32 @@ class ScalePractice(PracticeMode):
     def advance_note(self):
         """Advance to the next note in the scale sequence"""
         self.current_position += self.direction
-        
+
         # If we've reached the end of the scale going up
         if self.current_position >= len(self.current_scale):
-            if self.difficulty >= 2:
-                # For higher difficulties, go back down the scale
-                self.direction = -1
-                self.current_position = len(self.current_scale) - 2  # Second-to-last note
-            else:
-                # For beginner difficulty, just restart at the beginning
-                self.feedback_message = "Scale complete! Try another one."
-                self.select_scale()
-                return
-                
-        # If we've reached the beginning of the scale going down
+            if self.difficulty < 2:
+                return self._extracted_from_advance_note_13()
+            # For higher difficulties, go back down the scale
+            self.direction = -1
+            self.current_position = len(self.current_scale) - 2  # Second-to-last note
         elif self.current_position < 0:
-            self.feedback_message = "Scale complete! Try another one."
-            self.select_scale()
-            return
-            
+            return self._extracted_from_advance_note_13()
         # Update the expected note
         self.expecting_note = self.current_scale[self.current_position]
-        
-        # Update highlights
+
+        self._extracted_from_advance_note_21()
+
+    # TODO Rename this here and in `select_scale` and `advance_note`
+    def _extracted_from_advance_note_13(self):
+        # For beginner difficulty, just restart at the beginning
+        self.feedback_message = "Scale complete! Try another one."
+        self.select_scale()
+        return
+
+    # TODO Rename this here and in `select_scale` and `advance_note`
+    def _extracted_from_advance_note_21(self):
         self.piano_view.reset_highlights()
         self.piano_view.highlight_key(self.expecting_note, (0, 255, 0))
-        
-        # Highlight the entire scale with a different color
         for note in self.current_scale:
             if note != self.expecting_note:
                 self.piano_view.highlight_key(note, (100, 100, 255), priority=1)

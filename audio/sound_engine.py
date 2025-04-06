@@ -1,3 +1,4 @@
+import contextlib
 import os
 import time
 import threading
@@ -72,32 +73,28 @@ class SoundEngine:
         for prefix in ["piano_", "key_", "note_"]:
             if prefix in note_name:
                 note_name = note_name.split(prefix)[-1]
-        
+
         # Handle note names like A4, C5, etc.
         if len(note_name) >= 2 and note_name[-1].isdigit():
-            try:
+            with contextlib.suppress(ValueError, IndexError):
                 # Extract note and octave
                 if note_name[-2] == '#':
                     note = note_name[:-2]
-                    octave = int(note_name[-1])
                     is_sharp = True
                 else:
                     note = note_name[:-1]
-                    octave = int(note_name[-1])
                     is_sharp = False
-                
+
                 # Convert to MIDI note number
                 notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
                 if is_sharp:
-                    note = note + '#'
-                
+                    note = f'{note}#'
+
                 if note in notes:
                     note_index = notes.index(note)
+                    octave = int(note_name[-1])
                     # MIDI note 60 is middle C (C4)
                     return 12 * (octave + 1) + note_index
-            except (ValueError, IndexError):
-                pass
-                
         # Handle direct MIDI number in filename
         try:
             # If the filename directly contains the MIDI note number

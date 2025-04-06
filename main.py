@@ -69,14 +69,14 @@ class EnhancedPianoTrainer:
         for event in pygame.event.get():
             if event.type == QUIT:
                 self.running = False
-                
+
             elif event.type == KEYDOWN:
                 if event.key == K_ESCAPE:
-                    if not self.in_menu:
-                        self.in_menu = True
-                    else:
+                    if self.in_menu:
                         self.running = False
-                
+
+                    else:
+                        self.in_menu = True
                 # Menu navigation
                 if self.in_menu:
                     if event.key == K_UP:
@@ -91,16 +91,13 @@ class EnhancedPianoTrainer:
     
     def execute_menu_option(self, option):
         """Execute the selected menu option."""
-        if option == 0:  # Regular Practice
+        if option == 0:
             self.active_mode = self.regular_practice
             self.in_menu = False
-        elif option == 1:  # MIDI Practice
+        elif option == 1:
             self.active_mode = self.midi_practice
             self.in_menu = False
-        elif option == 2:  # Settings
-            # Will implement settings later
-            pass
-        elif option == 3:  # Exit
+        elif option == 3:
             self.running = False
     
     def draw_menu(self):

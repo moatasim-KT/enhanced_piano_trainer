@@ -130,13 +130,15 @@ class PianoView:
     def _calculate_dimensions(self, width: Optional[int], height: Optional[int]) -> None:
         """Calculate the piano dimensions based on the number of keys"""
         # Count white keys
-        white_keys = sum(1 for note in range(self.start_note, self.end_note + 1) 
-                         if (note % 12) not in {1, 3, 6, 8, 10})
-        
+        white_keys = sum(
+            note % 12 not in {1, 3, 6, 8, 10}
+            for note in range(self.start_note, self.end_note + 1)
+        )
+
         # Calculate minimum width and height
         min_width = white_keys * self.WHITE_KEY_WIDTH + 2 * self.PIANO_MARGIN
         min_height = self.WHITE_KEY_HEIGHT + 2 * self.PIANO_MARGIN
-        
+
         # Set dimensions, using provided values or calculated minimums
         self.width = max(width or 0, min_width)
         self.height = max(height or 0, min_height)
@@ -195,16 +197,16 @@ class PianoView:
         """Generate label for a key based on the label type setting"""
         if self.label_type == 'none':
             return ""
-        
+
         note_name = self.NOTE_NAMES[note % 12]
         octave = (note // 12) - 1  # MIDI note 0 is C-1
-        
-        if self.label_type == 'note_name':
-            return f"{note_name}{octave}"
+
+        if self.label_type == 'both':
+            return f"{note_name}{octave}\n{note}"
         elif self.label_type == 'midi_note':
             return str(note)
-        elif self.label_type == 'both':
-            return f"{note_name}{octave}\n{note}"
+        elif self.label_type == 'note_name':
+            return f"{note_name}{octave}"
         return ""
     
     def resize(self, width: int, height: int) -> None:
@@ -255,13 +257,15 @@ class PianoView:
         for note, key in self.keys.items():
             if not key.is_white and key.contains_point(pos):
                 return note
-        
-        # Then check white keys
-        for note, key in self.keys.items():
-            if key.is_white and key.contains_point(pos):
-                return note
-        
-        return None
+
+        return next(
+            (
+                note
+                for note, key in self.keys.items()
+                if key.is_white and key.contains_point(pos)
+            ),
+            None,
+        )
     
     def draw(self, target_surface: Optional[pygame.Surface] = None) -> pygame.Surface:
         """Draw the piano and return the surface"""
@@ -292,15 +296,12 @@ class PianoView:
     
     def show_octave_markers(self, show: bool = True) -> None:
         """Toggle display of octave markers"""
-        if show:
-            # Create octave marker labels for C keys
-            for note, key in self.keys.items():
+        for note, key in self.keys.items():
+            if show:
                 if note % 12 == 0 and key.is_white:  # C keys
                     octave = (note // 12) - 1  # MIDI note 0 is C-1
                     self.keys[note].label = f"C{octave}"
-        else:
-            # Restore original labels
-            for note, key in self.keys.items():
+            else:
                 key.label = self._get_key_label(note)
     
     def set_label_type(self, label_type: str) -> None:
