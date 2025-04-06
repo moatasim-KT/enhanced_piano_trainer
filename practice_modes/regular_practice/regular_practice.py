@@ -30,24 +30,17 @@ class RegularPracticeMode:
         if 1 <= level <= 5:
             self.difficulty = level
             
-    def update(self, events: List[pygame.event.Event], midi_inputs: List = None) -> None:
-        """
-        Update the practice mode based on user input
-        
-        Args:
-            events: List of pygame events
-            midi_inputs: Optional list of MIDI input events
-        """
-        return
+    def update(self, events):
+        print(f"{self.__class__.__name__}: update called")
     
     def draw(self, surface: pygame.Surface) -> None:
-        """
-        Draw practice mode specific elements on the surface
+        # Clear the screen and display a test message
+        surface.fill((50, 50, 50))  # Gray background
+        test_font = pygame.font.Font(None, 36)
+        text = test_font.render(f"{self.__class__.__name__} Active", True, (255, 255, 255))
+        surface.blit(text, (50, 50))
+        pygame.display.flip()
         
-        Args:
-            surface: Pygame surface to draw on
-        """
-    
     def get_feedback(self) -> Dict:
         """
         Get feedback on the current practice session
