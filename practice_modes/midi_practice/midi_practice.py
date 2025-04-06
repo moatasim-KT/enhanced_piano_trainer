@@ -21,7 +21,10 @@ class MIDIPracticeMode(RegularPracticeMode):
             self.midi_data = self.midi_loader.load_midi("media/midi/test_song.mid")
             if self.midi_data:
                 self.midi_data["tempo"] = 120  # Add a default tempo if not present
-                self.midi_data["total_ticks"] = max(note["start"] + note["duration"] for note in self.midi_data["notes"])
+                if self.midi_data["notes"]:
+                    self.midi_data["total_ticks"] = max(note["start"] + note["duration"] for note in self.midi_data["notes"])
+                else:
+                    self.midi_data["total_ticks"] = 0  # Default value for empty notes
         except Exception as e:
             print(f"Failed to load default MIDI file: {e}")
             self.midi_data = None
