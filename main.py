@@ -8,8 +8,8 @@ from pygame.locals import *
 # Import custom modules
 from ui.piano_view import PianoView
 from audio.sound_engine import SoundEngine
-from practice_modes.regular_practice import RegularPracticeMode
-from practice_modes.midi_practice.midi_practice import MIDIPracticeMode
+from practice_modes.regular_practice.regular_practice import RegularPracticeMode
+from practice_modes import MIDIPracticeMode
 from midi_processing.midi_loader import MIDILoader
 
 class EnhancedPianoTrainer:
