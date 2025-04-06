@@ -143,6 +143,7 @@ class NoteIdentificationPractice(RegularPracticeMode):
         return f"{notes[note_idx]}{octave}"
     
     def draw(self, surface: pygame.Surface) -> None:
+        print("NoteIdentificationPractice.draw() called")  # Added print statement
         """Draw practice-specific UI elements"""
         # Draw instructions
         instruction_text = self.font.render(self.instructions, True, (255, 255, 255))
