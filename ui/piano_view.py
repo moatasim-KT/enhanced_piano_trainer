@@ -83,7 +83,7 @@ class PianoView:
                 white_key_x += white_key_width
             else:
                 # Calculate the x position for black keys, which are between white keys
-                previous_white_key_x = 0
+                previous_white_key_x = None
                 for i in range(len(self.keys) -1 , -1, -1):
                     if self.keys[i].is_white:
                         previous_white_key_x = self.keys[i].position[0]
