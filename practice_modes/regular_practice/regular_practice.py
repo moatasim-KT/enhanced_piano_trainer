@@ -311,3 +311,18 @@ class ScalePractice(RegularPracticeMode):
         for note in self.current_scale:
             if note != self.expecting_note:
                 self.piano_view.highlight_key(note, (100, 100, 255), priority=1)
+
+    def draw(self, surface: pygame.Surface) -> None:
+        print("ScalePractice.draw() called")  # Added print statement
+        """Draw practice-specific UI elements for Scale Practice"""
+        # Draw instructions (scale name and general instructions)
+        instruction_text = self.font.render(f"{self.current_scale_name} - {self.instructions}", True, (255, 255, 255))
+        surface.blit(instruction_text, (20, 20))
+
+        # Draw feedback message
+        if self.feedback_message:
+            feedback_text = self.font.render(self.feedback_message, True, (255, 215, 0))
+            surface.blit(feedback_text, (20, 60))
+
+        # (Highlighting of keys is handled in update and advance_note methods 
+        #  using piano_view.highlight_key, so no rendering needed here)
