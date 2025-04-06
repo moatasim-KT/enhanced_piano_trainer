@@ -2,7 +2,8 @@ name: Build Application
 
 on`):
 
-```yaml
+yaml
+
 name: Build Application
 
 on: [push,: [push, pull_request]
@@ -26,6 +27,7 @@ atest
 
     - name: Cache dependencies
       uses: actions/cache name: Set up Node.js
+      uses: actions/cache run: npm run build
       uses: actions/setup-node@@v3
       with:
         path: ~/.cache
@@ -59,6 +61,3 @@ upgrade pip
       run: npm install
 
     - name: Build the application
-     ```
-
-Make sure to replace the version of `actions/cache run: npm run build
