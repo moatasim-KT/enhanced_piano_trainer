@@ -7,12 +7,12 @@ class MIDIPracticeMode(RegularPracticeMode):
 
     def handle_event(self, event):
         # Handle events specific to MIDI practice mode
-        pass
+        return
 
     def update(self, events):
         # Process events if needed; else ignore them.
-        pass
+        return
 
     def render(self):
         # Render MIDI practice mode UI
-        pass
+        return

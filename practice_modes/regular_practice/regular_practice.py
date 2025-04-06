@@ -38,7 +38,7 @@ class RegularPracticeMode:
             events: List of pygame events
             midi_inputs: Optional list of MIDI input events
         """
-        pass
+        return
     
     def draw(self, surface: pygame.Surface) -> None:
         """
@@ -47,7 +47,6 @@ class RegularPracticeMode:
         Args:
             surface: Pygame surface to draw on
         """
-        pass
     
     def get_feedback(self) -> Dict:
         """
