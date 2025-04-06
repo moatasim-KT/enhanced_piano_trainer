@@ -111,7 +111,7 @@ class PianoView:
         """Helper function to determine if a note is a white key"""
         return (note_number % 12) in [0, 2, 4, 5, 7, 9, 11]
 
-    def highlight_key(self, note_number: int, color: Tuple[int, int, int], priority: int = 0, duration: int = 0):
+    def highlight_key(self, note_number: int, color: Tuple[int, int, int]):
         for key in self.keys:
             if key.note_number == note_number:
                 key.highlight_color = color
