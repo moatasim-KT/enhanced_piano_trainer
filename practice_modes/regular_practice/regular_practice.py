@@ -298,17 +298,15 @@ class ScalePractice(RegularPracticeMode):
         # Update the expected note
         self.expecting_note = self.current_scale[self.current_position]
 
-        self._extracted_from_advance_note_21()
+        self._highlight_scale_keys()
 
-    # TODO Rename this here and in `select_scale` and `advance_note`
-    def _extracted_from_advance_note_13(self):
+    def _restart_scale(self):
         # For beginner difficulty, just restart at the beginning
         self.feedback_message = "Scale complete! Try another one."
         self.select_scale()
         return
 
-    # TODO Rename this here and in `select_scale` and `advance_note`
-    def _extracted_from_advance_note_21(self):
+    def _highlight_scale_keys(self):
         self.piano_view.reset_highlights()
         self.piano_view.highlight_key(self.expecting_note, (0, 255, 0))
         for note in self.current_scale:

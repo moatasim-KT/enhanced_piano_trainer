@@ -68,5 +68,48 @@ class PianoView:
         self._calculate_dimensions()
 
     def _calculate_dimensions(self):
-        total_keys = self.end_note - self.start_note + 1
+        white_keys = [n for n in range(self.start_note, self.end_note + 1) if self._is_white_key(n)]
+        num_white_keys = len(white_keys)
+        white_key_width = self.width // num_white_keys
+        black_key_width = int(white_key_width * 0.6)
+        black_key_height = int(self.height * 0.6)
+        
+        self.keys = []
+        white_key_x = 0
+        for note in range(self.start_note, self.end_note + 1):
+            if self._is_white_key(note):
+                key = PianoKey(note, True, (white_key_x, 0), (white_key_width, self.height))
+                self.keys.append(key)
+                white_key_x += white_key_width
+            else:
+                # Calculate the x position for black keys, which are between white keys
+                previous_white_key_x = 0
+                for i in range(len(self.keys) -1 , -1, -1):
+                    if self.keys[i].is_white:
+                        previous_white_key_x = self.keys[i].position[0]
+                        break
+                
+                key = PianoKey(note, False, (previous_white_key_x + white_key_width - black_key_width // 2, 0), (black_key_width, black_key_height))
+                self.keys.append(key)
 
+    def _is_white_key(self, note_number: int) -> bool:
+        """Helper function to determine if a note is a white key"""
+        # A simple way to identify white keys based on MIDI note number.  
+        # This will need to be adjusted for different keyboard layouts or note ranges.
+        return (note_number % 12) in [0, 2, 4, 5, 7, 9, 11]
+
+    def highlight_key(self, note_number: int, color: Tuple[int, int, int]):
+        for key in self.keys:
+            if key.note_number == note_number:
+                key.highlight_color = color
+                break
+
+    def unhighlight_key(self, note_number: int):
+        for key in self.keys:
+            if key.note_number == note_number:
+                key.highlight_color = None
+                break
+
+    def reset_key_colors(self):
+        for key in self.keys:
+            key.highlight_color = None
