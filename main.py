@@ -124,10 +124,7 @@ class EnhancedPianoTrainer:
         # Draw menu options
         for i, (text, text_rect) in enumerate(self.cached_menu_options):
             color = self.LIGHT_BLUE if i == self.selected_option else self.WHITE
-            if i == self.selected_option:
-                colored_text = self.font.render(self.menu_options[i], True, color)
-            else:
-                colored_text = self.font.render(self.menu_options[i], True, color)
+            colored_text = self.font.render(self.menu_options[i], True, color)
             self.screen.blit(colored_text, text_rect)
         
         # Draw instructions
